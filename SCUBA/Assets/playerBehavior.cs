@@ -76,15 +76,15 @@ public class playerBehavior : MonoBehaviour
         }
 
 
-        if (adda(1,2))
+        if (adda(1, 2))
         {
-            if (Input.GetKey(KeyCode.Space))
+            if (Input.GetKey(KeyCode.Space) || Input.GetKey(KeyCode.W))
             {
                 player.GetComponent<Rigidbody>().AddForce(Vector3.up * jumpStrength);
             }
 
         }
-        
+
         if (Input.GetMouseButton(0) && grapple && pull)
         {
             grapple = false;
@@ -102,12 +102,12 @@ public class playerBehavior : MonoBehaviour
 
 
 
-        if (Input.GetKey(KeyCode.UpArrow))
+        if (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W))
         {
             if (grapple)
                 dir = 1;
         }
-        else if (Input.GetKey(KeyCode.DownArrow))
+        else if (Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S))
         {
             if (grapple)
                 dir = 7;
@@ -118,13 +118,13 @@ public class playerBehavior : MonoBehaviour
                 dir = 4;
         }
 
-        if (Input.GetKey(KeyCode.LeftArrow))
+        if (Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A))
         {
             player.GetComponent<Rigidbody>().AddForce(Vector3.left * intensityMovementForce);
             if (grapple)
                 dir -= 1;
         }
-        else if (Input.GetKey(KeyCode.RightArrow))
+        else if (Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D))
         {
             player.GetComponent<Rigidbody>().AddForce(Vector3.right * intensityMovementForce);
             if (grapple)
