@@ -1,12 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using System;
 public class playerBehavior : MonoBehaviour
 {
     public GameObject player;
     private GameObject rope;
     public Material mat;
+    public GameObject water;
+    public GameObject playerSprite;
+
     float distToGround;
     bool isGrounded = false;
     [Range(0, 20)]
@@ -26,7 +29,10 @@ public class playerBehavior : MonoBehaviour
     Vector2 mousePosition;
     Vector3 maxDistance;
 
-    public int dir = 0;
+    private int dir = 0;
+
+    Vector3 spawnPosition;
+    Vector3 initSpawnPosition;
 
     //0  1  2
     //3  4  5
@@ -43,38 +49,80 @@ public class playerBehavior : MonoBehaviour
     Vector3 currentPullPos;
     Vector3 previousPullPos;
 
+    [Range(0, 100)]
+    public float maxBreath = 7;
+    private float breath = 7;
 
+    [Range(0, 100)]
+    public float waterRisingRate = 0.2f;
+
+    public Sprite[] textures;
+    int currentSprite = 0;
 
     // Start is called before the first frame update
     void Start()
     {
+        spawnPosition = player.transform.position;
+        initSpawnPosition = spawnPosition;
         Vector3[] vecArray = { Vector3.zero, Vector3.zero };
         rope = createLine(vecArray);
+        breath = maxBreath;
     }
 
     // Update is called once per frame
     void Update()
     {
         mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        Physics.SphereCast(player.transform.position, 0.1f, Vector3.back, out watRay, 0.2f);
+        Physics.SphereCast(player.transform.position, 0.1f, Vector3.back, out watRay, 3f);
         if (watRay.collider != null)
         {
-            if (inWater == false)
+            if (watRay.collider.tag == "Water")
             {
-                Physics.gravity = Physics.gravity / 8.0f;
+                if (inWater == false)
+                {
+                    Debug.Log("WATER");
+                    Physics.gravity = Physics.gravity / 2.0f;
+                }
+                breath -= Time.deltaTime;
+                inWater = true;
+                if(breath < 0)
+                {
+                    breath = maxBreath;
+                    player.GetComponent<Rigidbody>().velocity = Vector3.zero;
+                    player.transform.position = spawnPosition;
+                    water.transform.localScale = new Vector3(water.transform.localScale.x, (player.transform.position.y == -3.47f ? 10f : (player.transform.position.y == 23.93f ? 53f : (player.transform.position.y == 34.92f ? 87f : 90f))), water.transform.localScale.z);
+                }
             }
-            inWater = true;
+            else
+            {
+                try
+                {
+                    watRay.collider.gameObject.GetComponent<checkPoint>().updateSpawn(player);
+                } 
+                catch (Exception e)
+                {
+
+                }
+                try
+                {
+                    watRay.collider.gameObject.GetComponent<Win>().updateSpawn(player);
+
+                }
+                catch (Exception e)
+                {
+
+                }
+            }
         }
         else
         {
             if (inWater == true)
             {
-                Physics.gravity = Physics.gravity * 8.0f;
+                Physics.gravity = Physics.gravity * 2.0f;
 
             }
             inWater = false;
         }
-
 
         if (adda(1, 2))
         {
@@ -82,6 +130,15 @@ public class playerBehavior : MonoBehaviour
             {
                 player.GetComponent<Rigidbody>().AddForce(Vector3.up * jumpStrength);
             }
+
+        }
+
+        if (Input.GetKey(KeyCode.R))
+        {
+            player.GetComponent<Rigidbody>().velocity = Vector3.zero;
+            player.transform.position = spawnPosition;
+            breath = maxBreath;
+            water.transform.localScale = new Vector3(water.transform.localScale.x, (player.transform.position.y == -3.47f ? 10f : (player.transform.position.y == 23.93f ? 53f : (player.transform.position.y == 34.92f ? 87f : 90f))), water.transform.localScale.z);
 
         }
 
@@ -123,12 +180,32 @@ public class playerBehavior : MonoBehaviour
             player.GetComponent<Rigidbody>().AddForce(Vector3.left * intensityMovementForce);
             if (grapple)
                 dir -= 1;
+            playerSprite.GetComponent<SpriteRenderer>().flipX = true;
+
+            playerSprite.GetComponent<SpriteRenderer>().sprite = textures[currentSprite];
+            currentSprite++;
+            if (currentSprite > 3)
+            {
+                currentSprite = 1;
+            }
         }
         else if (Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D))
         {
             player.GetComponent<Rigidbody>().AddForce(Vector3.right * intensityMovementForce);
             if (grapple)
                 dir += 1;
+            playerSprite.GetComponent<SpriteRenderer>().flipX = false;
+            playerSprite.GetComponent<SpriteRenderer>().sprite = textures[currentSprite];
+            currentSprite++;
+            if (currentSprite > 4)
+            {
+                currentSprite = 1;
+            }
+        }
+        else
+        {
+            playerSprite.GetComponent<SpriteRenderer>().sprite = textures[0];
+            currentSprite = 0;
         }
 
         if (!grapple)
@@ -145,9 +222,13 @@ public class playerBehavior : MonoBehaviour
             
             if (ray.collider != null)
             {
-
-                player.GetComponent<Rigidbody>().AddForce(angle * grapplePower);
-
+                if (ray.collider.tag == "Hang")
+                {
+                    if (ropeDurationAt > 0.05f)
+                    {
+                        player.GetComponent<Rigidbody>().AddForce(angle * grapplePower);
+                    }
+                }
                 newVerts[0] = Vector3.zero;
                 newVerts[1] = Vector3.zero;
                 rope.GetComponent<LineRenderer>().SetPositions(newVerts);
@@ -204,10 +285,21 @@ public class playerBehavior : MonoBehaviour
             {
                 if (ray.collider.tag == "Pullable")
                 {
-                    pullingOBJ = ray.collider.gameObject;
-                    pullingObject = true;
-                    currentPullPos = newVerts[1];
-                    previousPullPos = newVerts[1];
+                    if (ropeDurationAt > 0.1f)
+                    {
+                        pullingOBJ = ray.collider.gameObject;
+                        pullingObject = true;
+                        currentPullPos = newVerts[1];
+                        previousPullPos = newVerts[1];
+                    }
+                    else
+                    {
+                        newVerts[0] = Vector3.zero;
+                        newVerts[1] = Vector3.zero;
+                        rope.GetComponent<LineRenderer>().SetPositions(newVerts);
+                        pull = true;
+                        ropeDurationAt = 0;
+                    }
                 }
                 else
                 {
@@ -250,6 +342,12 @@ public class playerBehavior : MonoBehaviour
 
             }
         }
+
+        if (true)//spawnPosition != initSpawnPosition)
+        {
+            water.transform.localScale += new Vector3(0, waterRisingRate * Time.deltaTime, 0);
+        }
+
     }
 
     private GameObject createLine(Vector3[] verts)
@@ -270,6 +368,19 @@ public class playerBehavior : MonoBehaviour
         return didHit;
     }
 
-    
+    public void updateCheckPoint(Vector3 pos)
+    {
+        spawnPosition = pos;
+    }
+
+    public void manualWaterIncrease(float value)
+    {
+        water.transform.localScale = new Vector3(water.transform.localScale.x, value, water.transform.localScale.z);
+    }
+
+    public void changeWaterRaisingRate(float value)
+    {
+        waterRisingRate = value;
+    }
 
 }
