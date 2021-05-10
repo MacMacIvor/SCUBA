@@ -90,7 +90,7 @@ public class playerBehavior : MonoBehaviour
                     breath = maxBreath;
                     player.GetComponent<Rigidbody>().velocity = Vector3.zero;
                     player.transform.position = spawnPosition;
-                    water.transform.localScale = new Vector3(water.transform.localScale.x, (player.transform.position.y == -3.47f ? 10f : (player.transform.position.y == 23.93f ? 53f : (player.transform.position.y == 34.92f ? 87f : 90f))), water.transform.localScale.z);
+                    water.transform.localScale = new Vector3(water.transform.localScale.x, (player.transform.position.y == -3f ? 10f : (player.transform.position.y == 23.93f ? 53f : (player.transform.position.y == 34.92f ? 87f : 10f))), water.transform.localScale.z);
                 }
             }
             else
@@ -138,7 +138,7 @@ public class playerBehavior : MonoBehaviour
             player.GetComponent<Rigidbody>().velocity = Vector3.zero;
             player.transform.position = spawnPosition;
             breath = maxBreath;
-            water.transform.localScale = new Vector3(water.transform.localScale.x, (player.transform.position.y == -3.47f ? 10f : (player.transform.position.y == 23.93f ? 53f : (player.transform.position.y == 34.92f ? 87f : 90f))), water.transform.localScale.z);
+            water.transform.localScale = new Vector3(water.transform.localScale.x, (player.transform.position.y == -3f ? 10f : (player.transform.position.y == 23.93f ? 53f : (player.transform.position.y == 34.92f ? 87f : 10f))), water.transform.localScale.z);
 
         }
 
